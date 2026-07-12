@@ -6,7 +6,7 @@
 #   ./install-macos.sh --uninstall  stop and remove the service
 #
 # Uses the port from config.json. Ports below 1024 (e.g. 80, for a bare
-# http://tv URL) need root, so those install as a system
+# http://tv.lan URL) need root, so those install as a system
 # LaunchDaemon via sudo; otherwise it's a per-user LaunchAgent.
 set -eu
 

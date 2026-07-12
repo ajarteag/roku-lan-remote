@@ -120,11 +120,15 @@ macOS will prompt once to allow Python to accept local network connections —
 approve it. (Linux equivalent: a systemd unit running
 `python3 /path/to/server.py`.)
 
-## A memorable URL (`http://tv`)
+## A memorable URL (`http://tv.lan`)
 
 Skip "what's the IP again?" by giving the host a short name in your
-router's local DNS — `tv`, `roku`, and `remote` are all good choices; the
-examples below use `tv`. The name should point at the **LAN IP of the
+router's local DNS — `tv.lan`, `roku.lan`, and `remote.lan` are all good
+choices; the examples below use `tv.lan`. The `.lan` suffix isn't just
+convention: bare single-label names (`http://tv`) don't resolve on Apple
+devices — Safari on macOS and *every* browser on iOS (Chrome included)
+refuse single-label DNS lookups — and the suffix nicely signals "this is
+on the local network." The name should point at the **LAN IP of the
 machine running `server.py`** (the Mac Studio / mini / Pi from the
 previous section) — every example below uses `<host-ip>` for it.
 
@@ -144,42 +148,31 @@ client, so one entry covers all devices:
 1. Reserve `<host-ip>`: admin panel → **Clients** → the host machine →
    *Modify* → fix/bind the IP (so the DNS entry never goes stale).
 2. Open LuCI (admin panel → **System → Advanced Settings**), or SSH to the
-   router, and add exact hostname records — **both** the bare name and the
-   dotted `.lan` form:
+   router, and add an exact hostname record:
 
    ```sh
    # via SSH on the router
-   uci add dhcp domain
-   uci set dhcp.@domain[-1].name='tv'
-   uci set dhcp.@domain[-1].ip='<host-ip>'
    uci add dhcp domain
    uci set dhcp.@domain[-1].name='tv.lan'
    uci set dhcp.@domain[-1].ip='<host-ip>'
    uci commit dhcp && /etc/init.d/dnsmasq restart
    ```
 
-   (In LuCI: **Network → DHCP and DNS → Hostnames** → add both entries.)
+   (In LuCI: **Network → DHCP and DNS → Hostnames** → Add → hostname
+   `tv.lan`, IP `<host-ip>`.)
 
-   The dotted form matters: Apple's network stack (Safari on macOS, and
-   *every* browser on iOS, Chrome included) won't resolve single-label
-   hostnames over plain DNS. With `tv.lan` registered and the router
-   advertising `lan` as the DHCP search domain, Apple devices resolve bare
-   `tv` by expanding it to `tv.lan` — and `http://tv.lan` always works
-   as-is. Browsers with their own resolver (desktop Chrome/Firefox) are
-   happy with bare `http://tv` either way. Don't use a dnsmasq *wildcard*
-   (`address=/tv/...`) for a short name — that would capture every real
-   `.tv` internet domain (including roku.tv) for the whole network.
+   Don't use a dnsmasq *wildcard* (`address=/tv/...`) instead — that would
+   capture every real `.tv` internet domain (including roku.tv) for the
+   whole network.
 3. To drop the `:8000` from the URL, serve on port 80: set
    `"server_port": 80` in `config.json` and re-run `./install-macos.sh`
    (it detects the privileged port and installs as a root LaunchDaemon).
-   Otherwise the URL is `http://tv:8000`.
+   Otherwise the URL is `http://tv.lan:8000`.
 
 Notes:
-- The first time, type `tv/` (with the slash) or the full `http://tv` —
-  browsers treat bare words in the address bar as search queries until
-  they learn it's a site.
-- If a device still won't resolve the bare name, use `http://tv.lan` —
-  that form works everywhere once both records exist.
+- The first time, type `tv.lan/` (with the slash) or the full
+  `http://tv.lan` — browsers treat bare words in the address bar as search
+  queries until they learn it's a site.
 - Clients using hardcoded/encrypted DNS (iCloud Private Relay, DoH) may
   bypass router DNS for custom names; turning those off for your home
   Wi-Fi fixes it.
