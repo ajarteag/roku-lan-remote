@@ -122,10 +122,11 @@ approve it. (Linux equivalent: a systemd unit running
 
 ## A memorable URL (`http://tv`)
 
-Skip "what's the IP again?" by giving the host a friendly name in your
-router's local DNS. The name should point at the **LAN IP of the machine
-running `server.py`** (the Mac Studio / mini / Pi from the previous
-section) — every example below uses `<host-ip>` for it.
+Skip "what's the IP again?" by giving the host a short name in your
+router's local DNS — `tv`, `roku`, and `remote` are all good choices; the
+examples below use `tv`. The name should point at the **LAN IP of the
+machine running `server.py`** (the Mac Studio / mini / Pi from the
+previous section) — every example below uses `<host-ip>` for it.
 
 **Finding `<host-ip>`:** on the host Mac, run `ipconfig getifaddr en0`
 (try `en1` if empty), or look in **System Settings → Wi-Fi/Network →
@@ -143,30 +144,40 @@ client, so one entry covers all devices:
 1. Reserve `<host-ip>`: admin panel → **Clients** → the host machine →
    *Modify* → fix/bind the IP (so the DNS entry never goes stale).
 2. Open LuCI (admin panel → **System → Advanced Settings**), or SSH to the
-   router, and add a dnsmasq address entry:
+   router, and add an exact hostname record:
 
    ```sh
    # via SSH on the router
-   uci add_list dhcp.@dnsmasq[0].address='/tv/<host-ip>'
+   uci add dhcp domain
+   uci set dhcp.@domain[-1].name='tv'
+   uci set dhcp.@domain[-1].ip='<host-ip>'
    uci commit dhcp && /etc/init.d/dnsmasq restart
    ```
 
-   (In LuCI: **Network → DHCP and DNS → General → Addresses** → add
-   `/tv/<host-ip>`.)
+   (In LuCI: **Network → DHCP and DNS → Hostnames** → Add → hostname `tv`,
+   IP `<host-ip>`.)
+
+   This resolves both `http://tv` and `http://tv.lan` (the router's local
+   domain). Don't use a dnsmasq *wildcard* (`address=/tv/...`) for a short
+   name — that would capture every real `.tv` internet domain (including
+   roku.tv) for the whole network.
 3. To drop the `:8000` from the URL, serve on port 80: set
    `"server_port": 80` in `config.json` and re-run `./install-macos.sh`
    (it detects the privileged port and installs as a root LaunchDaemon).
    Otherwise the URL is `http://tv:8000`.
 
 Notes:
-- The first time, type the full `http://tv` — some browsers treat
-  bare made-up TLDs as search queries until they learn it's a site.
+- The first time, type `tv/` (with the slash) or the full `http://tv` —
+  browsers treat bare words in the address bar as search queries until
+  they learn it's a site.
+- If a device won't resolve the bare single-label name (a few OSes skip
+  DNS for those), the two-label form `http://tv.lan` works everywhere.
 - Clients using hardcoded/encrypted DNS (iCloud Private Relay, DoH) may
   bypass router DNS for custom names; turning those off for your home
   Wi-Fi fixes it.
 - Zero-router-config alternative on Apple networks: set the host's local
-  hostname to `roku` (System Settings → General → Sharing) and use
-  `http://roku.local:8000` via mDNS/Bonjour.
+  hostname to `tv` (System Settings → General → Sharing) and use
+  `http://tv.local:8000` via mDNS/Bonjour.
 
 ## Repo layout
 
