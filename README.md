@@ -144,23 +144,31 @@ client, so one entry covers all devices:
 1. Reserve `<host-ip>`: admin panel → **Clients** → the host machine →
    *Modify* → fix/bind the IP (so the DNS entry never goes stale).
 2. Open LuCI (admin panel → **System → Advanced Settings**), or SSH to the
-   router, and add an exact hostname record:
+   router, and add exact hostname records — **both** the bare name and the
+   dotted `.lan` form:
 
    ```sh
    # via SSH on the router
    uci add dhcp domain
    uci set dhcp.@domain[-1].name='tv'
    uci set dhcp.@domain[-1].ip='<host-ip>'
+   uci add dhcp domain
+   uci set dhcp.@domain[-1].name='tv.lan'
+   uci set dhcp.@domain[-1].ip='<host-ip>'
    uci commit dhcp && /etc/init.d/dnsmasq restart
    ```
 
-   (In LuCI: **Network → DHCP and DNS → Hostnames** → Add → hostname `tv`,
-   IP `<host-ip>`.)
+   (In LuCI: **Network → DHCP and DNS → Hostnames** → add both entries.)
 
-   This resolves both `http://tv` and `http://tv.lan` (the router's local
-   domain). Don't use a dnsmasq *wildcard* (`address=/tv/...`) for a short
-   name — that would capture every real `.tv` internet domain (including
-   roku.tv) for the whole network.
+   The dotted form matters: Apple's network stack (Safari on macOS, and
+   *every* browser on iOS, Chrome included) won't resolve single-label
+   hostnames over plain DNS. With `tv.lan` registered and the router
+   advertising `lan` as the DHCP search domain, Apple devices resolve bare
+   `tv` by expanding it to `tv.lan` — and `http://tv.lan` always works
+   as-is. Browsers with their own resolver (desktop Chrome/Firefox) are
+   happy with bare `http://tv` either way. Don't use a dnsmasq *wildcard*
+   (`address=/tv/...`) for a short name — that would capture every real
+   `.tv` internet domain (including roku.tv) for the whole network.
 3. To drop the `:8000` from the URL, serve on port 80: set
    `"server_port": 80` in `config.json` and re-run `./install-macos.sh`
    (it detects the privileged port and installs as a root LaunchDaemon).
@@ -170,8 +178,8 @@ Notes:
 - The first time, type `tv/` (with the slash) or the full `http://tv` —
   browsers treat bare words in the address bar as search queries until
   they learn it's a site.
-- If a device won't resolve the bare single-label name (a few OSes skip
-  DNS for those), the two-label form `http://tv.lan` works everywhere.
+- If a device still won't resolve the bare name, use `http://tv.lan` —
+  that form works everywhere once both records exist.
 - Clients using hardcoded/encrypted DNS (iCloud Private Relay, DoH) may
   bypass router DNS for custom names; turning those off for your home
   Wi-Fi fixes it.
