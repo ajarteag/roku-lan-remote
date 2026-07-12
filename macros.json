@@ -1,0 +1,45 @@
+[
+  {
+    "name": "Movie Night",
+    "icon": "🎬",
+    "steps": [
+      { "type": "keypress", "value": "PowerOn" },
+      { "type": "delay", "value": 2500 },
+      { "type": "launch", "value": "12" }
+    ]
+  },
+  {
+    "name": "Mac Mode",
+    "icon": "💻",
+    "steps": [
+      { "type": "keypress", "value": "PowerOn" },
+      { "type": "delay", "value": 2000 },
+      { "type": "launch", "value": "tvinput.hdmi3" }
+    ]
+  },
+  {
+    "name": "Switch 2",
+    "icon": "🎮",
+    "steps": [
+      { "type": "keypress", "value": "PowerOn" },
+      { "type": "delay", "value": 2000 },
+      { "type": "launch", "value": "tvinput.hdmi1" }
+    ]
+  },
+  {
+    "name": "YouTube",
+    "icon": "▶️",
+    "steps": [
+      { "type": "keypress", "value": "PowerOn" },
+      { "type": "delay", "value": 2000 },
+      { "type": "launch", "value": "837" }
+    ]
+  },
+  {
+    "name": "Goodnight",
+    "icon": "🌙",
+    "steps": [
+      { "type": "keypress", "value": "PowerOff" }
+    ]
+  }
+]

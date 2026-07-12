@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Roku Remote</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📺</text></svg>">
+</head>
+<body>
+<header id="header">
+  <div class="tv-line">
+    <span id="power-dot" class="dot"></span>
+    <span id="tv-name">Connecting…</span>
+  </div>
+  <div class="now-playing">
+    <img id="now-icon" alt="" hidden>
+    <div>
+      <div id="now-app">—</div>
+      <div id="now-state" class="muted">looking for the TV…</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="card" id="remote">
+    <div class="row spread">
+      <button class="key danger" data-key="Power" title="Power">⏻</button>
+      <button class="key" data-key="Back" title="Back">←</button>
+      <button class="key" data-key="Home" title="Home">⌂</button>
+    </div>
+    <div class="dpad">
+      <span></span><button class="key big" data-key="Up">▲</button><span></span>
+      <button class="key big" data-key="Left">◀</button>
+      <button class="key big ok" data-key="Select">OK</button>
+      <button class="key big" data-key="Right">▶</button>
+      <span></span><button class="key big" data-key="Down">▼</button><span></span>
+    </div>
+    <div class="row">
+      <button class="key" data-key="InstantReplay" title="Replay">↺</button>
+      <button class="key" data-key="Info" title="Options">✱</button>
+      <button class="key" data-key="Rev">⏪</button>
+      <button class="key" data-key="Play">⏯</button>
+      <button class="key" data-key="Fwd">⏩</button>
+    </div>
+    <div class="row">
+      <button class="key" data-key="VolumeMute" title="Mute">🔇</button>
+      <button class="key wide" data-key="VolumeDown">Vol −</button>
+      <button class="key wide" data-key="VolumeUp">Vol +</button>
+    </div>
+    <form id="text-form" class="row">
+      <input id="text-input" type="text" placeholder="Type on the TV…" autocomplete="off">
+      <button class="key" type="submit">Send</button>
+    </form>
+  </section>
+
+  <div class="stack">
+    <section class="card">
+      <h2>Automations</h2>
+      <div id="macros" class="chip-grid"></div>
+      <details id="macro-editor">
+        <summary class="muted">Edit automations (JSON)</summary>
+        <textarea id="macro-json" rows="12" spellcheck="false"></textarea>
+        <div class="row">
+          <button class="key wide" id="macro-save">Save</button>
+        </div>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2>Inputs</h2>
+      <div id="inputs" class="chip-grid"></div>
+    </section>
+
+    <section class="card">
+      <h2>Apps</h2>
+      <div id="apps" class="app-grid"></div>
+    </section>
+  </div>
+</main>
+
+<div id="toast" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>
