@@ -103,27 +103,18 @@ To keep it running on an always-on machine (Mac mini/Studio, a NAS, a Pi):
 
 1. Clone the repo there and run `python3 discover.py --save` once.
 2. Give the host a static IP or DHCP reservation in your router.
-3. macOS — create `~/Library/LaunchAgents/com.roku.remote.plist`:
+3. From the repo directory:
 
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
-  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>Label</key><string>com.roku.remote</string>
-  <key>ProgramArguments</key>
-  <array>
-    <string>/usr/bin/python3</string>
-    <string>/Users/YOUR_USER/roku-lan-remote/server.py</string>
-  </array>
-  <key>RunAtLoad</key><true/>
-  <key>KeepAlive</key><true/>
-</dict>
-</plist>
+```sh
+./install-macos.sh
 ```
 
-4. `launchctl load ~/Library/LaunchAgents/com.roku.remote.plist`
+That registers a launchd service (start on boot, auto-restart on crash)
+pointing at wherever the repo lives, using the port from `config.json` —
+ports below 1024 are installed as a root LaunchDaemon via sudo, everything
+else as a per-user LaunchAgent. Logs go to `server.log` in the repo.
+Re-run it after changing `config.json`; remove it with
+`./install-macos.sh --uninstall`.
 
 macOS will prompt once to allow Python to accept local network connections —
 approve it. (Linux equivalent: a systemd unit running
@@ -151,9 +142,9 @@ serves DNS to every client, so one entry covers all devices:
    (In LuCI: **Network → DHCP and DNS → General → Addresses** → add
    `/tv/192.168.4.10`.)
 3. To drop the `:8000` from the URL, serve on port 80: set
-   `"server_port": 80` in `config.json` and run the server as root — on
-   macOS put the plist in `/Library/LaunchDaemons/` instead (ports below
-   1024 need root). Otherwise the URL is `http://tv:8000`.
+   `"server_port": 80` in `config.json` and re-run `./install-macos.sh`
+   (it detects the privileged port and installs as a root LaunchDaemon).
+   Otherwise the URL is `http://tv:8000`.
 
 Notes:
 - The first time, type the full `http://tv` — some browsers treat
