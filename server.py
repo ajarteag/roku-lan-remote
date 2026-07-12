@@ -7,6 +7,7 @@ and observe the TV. Run with: python3 server.py
 """
 import json
 import re
+import subprocess
 import time
 import urllib.parse
 import urllib.request
@@ -209,11 +210,25 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json({"error": str(exc)}, 502)
 
 
+def lan_ips():
+    """This machine's LAN IPv4 addresses (what other devices should browse to)."""
+    try:
+        out = subprocess.run(["ifconfig"], capture_output=True, text=True,
+                             timeout=5).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        out = ""
+    addrs = re.findall(r"inet (\d+\.\d+\.\d+\.\d+)", out)
+    return [a for a in addrs if not a.startswith(("127.", "169.254."))]
+
+
 def main():
     port = int(CONFIG.get("server_port", 8000))
     handler = partial(Handler, directory=str(ROOT / "static"))
     server = ThreadingHTTPServer(("0.0.0.0", port), handler)
-    print(f"Roku remote serving on http://0.0.0.0:{port} -> TV {CONFIG['tv_ip']}")
+    suffix = "" if port == 80 else f":{port}"
+    print(f"Roku remote -> TV {CONFIG['tv_ip']}, reachable at:")
+    for ip in lan_ips() or ["<this-machine's-ip>"]:
+        print(f"  http://{ip}{suffix}")
     server.serve_forever()
 
 

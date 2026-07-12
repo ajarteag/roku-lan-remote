@@ -37,7 +37,7 @@ python3 server.py            # serve the web remote on port 8000
 ```
 
 Open `http://localhost:8000` on the host, or `http://<host-ip>:8000` from any
-phone/laptop on the network. On iPhone, Share → **Add to Home Screen** gives
+phone/laptop on the network — the server prints the exact URL(s) at startup. On iPhone, Share → **Add to Home Screen** gives
 you a fullscreen, app-like remote.
 
 Discovery checks **every network interface** (Ethernet + Wi-Fi), so it works
@@ -123,24 +123,36 @@ approve it. (Linux equivalent: a systemd unit running
 ## A memorable URL (`http://tv`)
 
 Skip "what's the IP again?" by giving the host a friendly name in your
-router's local DNS. On OpenWrt-based routers (including GL.iNet), dnsmasq
-serves DNS to every client, so one entry covers all devices:
+router's local DNS. The name should point at the **LAN IP of the machine
+running `server.py`** (the Mac Studio / mini / Pi from the previous
+section) — every example below uses `<host-ip>` for it.
+
+**Finding `<host-ip>`:** on the host Mac, run `ipconfig getifaddr en0`
+(try `en1` if empty), or look in **System Settings → Wi-Fi/Network →
+Details → TCP/IP**; it's also listed next to the machine in the router's
+Clients page. If the host is connected to more than one network (e.g.
+wired to an upstream router and on the TV's Wi-Fi), use its IP **on the
+same router as the TV** — that's the network whose clients will use the
+name. It'll look like `192.168.x.x` or `10.x.x.x`.
+
+On OpenWrt-based routers (including GL.iNet), dnsmasq serves DNS to every
+client, so one entry covers all devices:
 
 **GL.iNet (e.g. Beryl AX / GL-MT3000):**
 
-1. Reserve the host's IP: admin panel → **Clients** → your host → *Modify* →
-   fix/bind the IP (so the DNS entry never goes stale).
+1. Reserve `<host-ip>`: admin panel → **Clients** → the host machine →
+   *Modify* → fix/bind the IP (so the DNS entry never goes stale).
 2. Open LuCI (admin panel → **System → Advanced Settings**), or SSH to the
    router, and add a dnsmasq address entry:
 
    ```sh
    # via SSH on the router
-   uci add_list dhcp.@dnsmasq[0].address='/tv/192.168.4.10'
+   uci add_list dhcp.@dnsmasq[0].address='/tv/<host-ip>'
    uci commit dhcp && /etc/init.d/dnsmasq restart
    ```
 
    (In LuCI: **Network → DHCP and DNS → General → Addresses** → add
-   `/tv/192.168.4.10`.)
+   `/tv/<host-ip>`.)
 3. To drop the `:8000` from the URL, serve on port 80: set
    `"server_port": 80` in `config.json` and re-run `./install-macos.sh`
    (it detects the privileged port and installs as a root LaunchDaemon).
