@@ -40,7 +40,11 @@ Open `http://localhost:8000` on the host, or `http://<host-ip>:8000` from any
 phone/laptop on the network. On iPhone, Share → **Add to Home Screen** gives
 you a fullscreen, app-like remote.
 
-If discovery fails (some Wi-Fi setups block multicast and scanning), find the
+Discovery checks **every network interface** (Ethernet + Wi-Fi), so it works
+on multi-homed hosts — e.g. a machine wired to one router while the TV sits
+on a second, daisy-chained router reached over Wi-Fi. If it still finds
+nothing (some Wi-Fi setups block multicast and scanning), force the TV's
+subnet with `python3 discover.py --subnet 192.168.4 --save`, or find the
 TV's IP under **Settings → Network → About** and put it in `config.json`.
 
 ### Desktop keyboard shortcuts (web app)
