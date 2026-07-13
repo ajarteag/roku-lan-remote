@@ -57,6 +57,11 @@ python3 roku_tui.py          # uses tv_ip from config.json; or --ip 192.168.1.50
   `+`/`-` volume · `m` mute · `p` power · `a` app picker · `t` type mode ·
   `q` quit
 
+<p align="center">
+  <img src="screenshots/tui.png" alt="TUI remote with live status bar" width="680">
+  <img src="screenshots/tui-apps.png" alt="TUI app picker" width="680">
+</p>
+
 ## Automations
 
 `macros.json` holds a list of `{name, icon, steps}`, editable in the web UI
