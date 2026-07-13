@@ -6,15 +6,15 @@ library only. Talks to the TV via Roku's built-in
 [External Control Protocol](https://developer.roku.com/dev/docs/external-control-api)
 (ECP, port 8060), the same API the official mobile app uses.
 
-- 📺 **Live status** — power, active app + icon, play/pause, position
-- 🎛️ **Full remote** — d-pad, playback, volume, power; works *inside* apps
+- **Live status** — power, active app + icon, play/pause, position
+- **Full remote** — d-pad, playback, volume, power; works *inside* apps
   (YouTube, Netflix, …)
-- 🚀 **App launcher** — every channel with its real icon, one-tap input
+- **App launcher** — every channel with its real icon, one-tap input
   switching (HDMI, AV, tuner)
-- ⌨️ **Text sender** — type into TV search/login keyboards
-- ⚡ **Automations** — macro sequences, editable in the UI, each triggerable
+- **Text sender** — type into TV search/login keyboards
+- **Automations** — macro sequences, editable in the UI, each triggerable
   via a plain HTTP call
-- 🖥️ **TUI** — a curses terminal remote, no server needed
+- **TUI** — a curses terminal remote, no server needed
 
 <p align="center">
   <img src="screenshots/desktop.png" alt="Web app on desktop" width="630">
