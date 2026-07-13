@@ -16,6 +16,11 @@ library only. Talks to the TV via Roku's built-in
   via a plain HTTP call
 - 🖥️ **TUI** — a curses terminal remote, no server needed
 
+<p align="center">
+  <img src="screenshots/desktop.png" alt="Web app on desktop" width="630">
+  <img src="screenshots/mobile.png" alt="Web app on a phone" width="210">
+</p>
+
 ## Prerequisites
 
 - Roku TV/player and host computer on the same network.
