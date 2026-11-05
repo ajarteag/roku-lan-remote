@@ -2,3 +2,5 @@ __pycache__/
 *.pyc
 .DS_Store
 server.log
+roku_gui.pid
+gui.log
