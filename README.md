@@ -82,6 +82,28 @@ brew install sveinbjornt/hear/hear   # or grab the prebuilt binary from the site
   <img src="screenshots/tui-apps.png" alt="TUI app picker" width="680">
 </p>
 
+## Hotkey window (macOS)
+
+The same remote as the TUI (identical keys, type mode, app picker,
+dictation) in a small window you summon from anywhere with a global hotkey.
+It stays running with no Dock icon; the hotkey shows it and gives it focus.
+
+```sh
+./install-gui-macos.sh       # builds ~/Applications/Roku Remote.app, starts it at login
+```
+
+- Default hotkey **cmd+shift+u**; change it with `"hotkey"` in `config.json`
+  (e.g. `"ctrl+opt+r"`), then re-run the installer. A global hotkey takes
+  the combo away from every app: ⌘⇧U only costs VS Code's Output panel and
+  Finder's Go → Utilities, while ⌘⇧T / ⌘⇧R would break browser shortcuts.
+- Hide: the hotkey again, `esc` (in remote mode), `q`, or ⌘W. Quit: ⌘Q.
+- No Accessibility / Input Monitoring permission needed: the hotkey uses
+  Carbon's `RegisterEventHotKey`. If macOS asks to find devices on your
+  local network, click Allow (that's how it reaches the TV).
+- Without installing: `python3 roku_gui.py` (shows the running instance if
+  there is one) · `python3 roku_gui.py --toggle` for other hotkey tools.
+- Logs: `gui.log` · remove: `./install-gui-macos.sh --uninstall`
+
 ## Automations
 
 `macros.json` holds a list of `{name, icon, steps}`, editable in the web UI
@@ -167,9 +189,12 @@ Notes:
 
 - `server.py` — web server + ECP proxy (stdlib only)
 - `static/` — the web UI
-- `roku_tui.py` — standalone terminal remote
+- `roku_core.py` — shared remote logic: ECP client, dictation, key bindings
+- `roku_tui.py` — terminal remote (curses front end for roku_core)
+- `roku_gui.py` — hotkey window (Tk front end for roku_core, macOS)
+- `macos/launcher.swift`, `install-gui-macos.sh` — Roku Remote.app wrapper
 - `discover.py` — find Rokus on the LAN, `--save` writes `config.json`
-- `config.json` — TV IP + server port
+- `config.json` — TV IP, server port, GUI hotkey
 - `macros.json` — automation definitions
 
 ## How it works
@@ -178,8 +203,8 @@ Roku devices expose a plain HTTP API on port 8060 (ECP): `POST /keypress/<key>`
 presses remote buttons (which is why navigation works inside any app),
 `POST /launch/<id>` opens apps and inputs, and `GET /query/*` reports device,
 app, and playback state. `server.py` proxies those endpoints, parses the XML
-into JSON, and serves the single-page UI in `static/`. The TUI talks to the
-TV directly.
+into JSON, and serves the single-page UI in `static/`. The TUI and hotkey
+window talk to the TV directly.
 
 Not possible by design: screenshots/video of protected app content (Roku only
 allows screen capture for sideloaded dev channels), and there's no clean API
