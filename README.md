@@ -55,8 +55,9 @@ The web server is also published as a container image for `linux/amd64` and
 web UI are inside; the TUI and hotkey window stay native.
 
 ```sh
-# Docker Compose (from a clone; put TV_IP in a .env file or inline)
-TV_IP=192.168.1.50 docker compose up -d
+# Docker Compose (from a clone): settings live in .env
+python3 discover.py --save      # finds the TV, writes config.json and .env
+docker compose up -d            # (or: cp .env.example .env and fill in TV_IP)
 
 # plain docker, no clone needed
 docker run -d --name roku-remote --restart unless-stopped -p 8000:8000 \
@@ -78,7 +79,7 @@ container run -d --name roku-remote -p 8000:8000 \
   under **Settings → Network → About**.
 - Build locally instead of pulling: `docker build -t roku-lan-remote .` or
   `container build -t roku-lan-remote .`, then use that image name.
-- `PORT=80 TV_IP=… docker compose up -d` publishes a bare `http://tv.lan`.
+- `PORT=80` in `.env` publishes a bare `http://tv.lan`.
 
 ## Terminal remote (TUI)
 
@@ -248,8 +249,9 @@ Notes:
 - `roku_tui.py` — terminal remote (curses front end for roku_core)
 - `roku_gui.py` — hotkey window (Tk front end for roku_core, macOS)
 - `macos/launcher.swift`, `install-gui-macos.sh` — Roku Remote.app wrapper
-- `discover.py` — find Rokus on the LAN, `--save` writes `config.json`
+- `discover.py` — find Rokus on the LAN, `--save` writes `config.json` and `.env`
 - `config.json` — TV IP, server port, GUI hotkey
+- `.env.example` — template for the `.env` that `docker compose` reads
 - `macros.json` — automation definitions
 
 ## How it works

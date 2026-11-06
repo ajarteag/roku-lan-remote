@@ -4,3 +4,4 @@ __pycache__/
 server.log
 roku_gui.pid
 gui.log
+.env

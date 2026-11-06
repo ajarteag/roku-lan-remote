@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Find Roku devices on the local network and optionally save one to config.json.
+"""Find Roku devices on the local network and optionally save one to config.json
+and .env (the latter is what docker compose reads).
 
 Usage:
   python3 discover.py                    # list Rokus found on the LAN
-  python3 discover.py --save             # also write the first one to config.json
+  python3 discover.py --save             # also write the first one to config.json + .env
   python3 discover.py --subnet 192.168.4 # force a specific /24 to scan
 
 Tries SSDP multicast on every network interface first (instant), then falls
@@ -21,6 +22,8 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 CONFIG_PATH = Path(__file__).resolve().parent / "config.json"
+ENV_PATH = CONFIG_PATH.with_name(".env")
+ENV_EXAMPLE_PATH = CONFIG_PATH.with_name(".env.example")
 
 
 def describe(ip):
@@ -98,7 +101,7 @@ def subnet_scan(prefix):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--save", action="store_true",
-                        help="write the first Roku found to config.json")
+                        help="write the first Roku found to config.json and .env")
     parser.add_argument("--subnet", action="append", default=[],
                         help="extra /24 to scan, e.g. 192.168.4 (repeatable)")
     args = parser.parse_args()
@@ -137,7 +140,26 @@ def main():
         config["tv_ip"] = rokus[0][0]
         config.setdefault("server_port", 8000)
         CONFIG_PATH.write_text(json.dumps(config, indent=2) + "\n")
-        print(f"\nSaved {rokus[0][0]} to {CONFIG_PATH.name}")
+        save_env("TV_IP", rokus[0][0])
+        print(f"\nSaved {rokus[0][0]} to {CONFIG_PATH.name} and {ENV_PATH.name}")
+
+
+def save_env(key, value):
+    """Set key=value in .env, keeping every other line.
+
+    Starts from .env.example when there is no .env yet so the comments and
+    the other settings come along.
+    """
+    source = ENV_PATH if ENV_PATH.exists() else ENV_EXAMPLE_PATH
+    lines = source.read_text().splitlines() if source.exists() else []
+    line = f"{key}={value}"
+    for i, existing in enumerate(lines):
+        if existing.split("=", 1)[0].strip() == key:
+            lines[i] = line
+            break
+    else:
+        lines.append(line)
+    ENV_PATH.write_text("\n".join(lines) + "\n")
 
 
 if __name__ == "__main__":
