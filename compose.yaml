@@ -1,9 +1,9 @@
 # docker compose up -d            # prebuilt image from GHCR
 # docker compose up -d --build    # or build from this checkout
 #
-# Settings come from the environment (or a .env file next to this file):
-#   TV_IP   the Roku's address (required; find it with `python3 discover.py`
-#           on the host, or on the TV under Settings > Network > About)
+# Settings come from .env next to this file (`python3 discover.py --save`
+# writes it, or copy .env.example), or from the environment:
+#   TV_IP   the Roku's address (required)
 #   PORT    host port to publish, default 8000 (PORT=80 for a bare http://tv.lan)
 #
 # The roku-data volume keeps macros.json (automations edited in the UI). A
