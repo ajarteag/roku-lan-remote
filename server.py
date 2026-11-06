@@ -4,8 +4,14 @@
 Serves the web UI from ./static and proxies/parses the Roku External
 Control Protocol (ECP, port 8060) so any browser on the LAN can control
 and observe the TV. Run with: python3 server.py
+
+Environment (all optional; set by the container image, unused when run bare):
+  DATA_DIR  directory holding config.json and macros.json (default: this dir)
+  TV_IP     overrides tv_ip from config.json
+  PORT      overrides server_port from config.json
 """
 import json
+import os
 import re
 import subprocess
 import sys
@@ -19,8 +25,13 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-CONFIG_PATH = ROOT / "config.json"
-MACROS_PATH = ROOT / "macros.json"
+# In a container DATA_DIR is a volume (/data) so config and automations outlive
+# the image; the Mac installer bind-mounts the repo itself there so the TUI and
+# hotkey window keep sharing the same two files.
+DATA_DIR = Path(os.environ.get("DATA_DIR") or ROOT)
+IN_CONTAINER = DATA_DIR != ROOT
+CONFIG_PATH = DATA_DIR / "config.json"
+MACROS_PATH = DATA_DIR / "macros.json"
 
 SAFE_ID = re.compile(r"^[A-Za-z0-9_.%-]+$")
 
@@ -33,6 +44,18 @@ def load_json(path, default):
 
 
 CONFIG = load_json(CONFIG_PATH, {"tv_ip": "192.168.4.217", "server_port": 8000})
+if os.environ.get("TV_IP", "").strip():
+    CONFIG["tv_ip"] = os.environ["TV_IP"].strip()
+if os.environ.get("PORT", "").strip():
+    CONFIG["server_port"] = int(os.environ["PORT"])
+
+if not MACROS_PATH.exists() and (ROOT / "macros.json").exists():
+    # Fresh volume: start from the bundled example automations so the
+    # Automations panel isn't empty.
+    try:
+        MACROS_PATH.write_bytes((ROOT / "macros.json").read_bytes())
+    except OSError:
+        pass
 
 ICON_CACHE = {}
 
@@ -153,7 +176,11 @@ class Handler(SimpleHTTPRequestHandler):
     def do_GET(self):
         route = urllib.parse.urlparse(self.path).path
         try:
-            if route == "/api/status":
+            if route == "/api/health":
+                # Liveness only (never touches the TV): container HEALTHCHECK
+                # and the installer's readiness loop.
+                self.send_json({"ok": True, "tv_ip": CONFIG["tv_ip"]})
+            elif route == "/api/status":
                 self.send_json(query_status())
             elif route == "/api/apps":
                 self.send_json(query_apps())
@@ -256,8 +283,13 @@ def main():
     # flush=True so the banner reaches server.log immediately when stdout is a
     # file (launchd) rather than sitting in a block buffer until the process dies.
     print(f"Roku remote -> TV {CONFIG['tv_ip']}, reachable at:", flush=True)
-    for ip in lan_ips() or ["<this-machine's-ip>"]:
-        print(f"  http://{ip}{suffix}", flush=True)
+    if IN_CONTAINER:
+        # The interfaces visible here belong to the container, not the LAN.
+        print(f"  http://<host-ip>:<published port> (container port {port})",
+              flush=True)
+    else:
+        for ip in lan_ips() or ["<this-machine's-ip>"]:
+            print(f"  http://{ip}{suffix}", flush=True)
     server.serve_forever()
 
 

@@ -24,7 +24,8 @@ library only. Talks to the TV via Roku's built-in
 ## Prerequisites
 
 - Roku TV/player and host computer on the same network.
-- Python 3.9+ on the host (preinstalled on macOS). Nothing to `pip install`.
+- Python 3.9+ on the host (preinstalled on macOS), or Docker / Apple's
+  `container` to run the prebuilt image. Nothing to `pip install`.
 - On the TV: **Settings → System → Advanced system settings → Control by
   mobile apps → Network access → Default** (no developer mode needed).
 
@@ -44,6 +45,40 @@ python3 server.py            # serve the web remote (prints its URLs)
 - Discovery searches every network interface. If it finds nothing, force a
   subnet with `python3 discover.py --subnet 192.168.4 --save`, or copy the
   TV's IP (**Settings → Network → About**) into `config.json`.
+
+## Run it in a container
+
+The web server is also published as a container image for `linux/amd64` and
+`linux/arm64` (Raspberry Pi, Apple silicon, ARM NASes):
+`ghcr.io/ajarteag/roku-lan-remote`. `:latest` tracks `main`; a release tag
+`v1.2.0` also publishes `:1.2.0`, `:1.2` and `:1`. Only `server.py` and the
+web UI are inside; the TUI and hotkey window stay native.
+
+```sh
+# Docker Compose (from a clone; put TV_IP in a .env file or inline)
+TV_IP=192.168.1.50 docker compose up -d
+
+# plain docker, no clone needed
+docker run -d --name roku-remote --restart unless-stopped -p 8000:8000 \
+  -e TV_IP=192.168.1.50 -v roku-data:/data ghcr.io/ajarteag/roku-lan-remote:latest
+
+# Apple's container CLI (macOS 26+, Apple silicon)
+container run -d --name roku-remote -p 8000:8000 \
+  -e TV_IP=192.168.1.50 -v roku-data:/data ghcr.io/ajarteag/roku-lan-remote:latest
+```
+
+| Setting | Default | |
+|---|---|---|
+| `TV_IP` | `tv_ip` from `/data/config.json` | the Roku's address (overrides the file) |
+| `PORT` | `8000` | port the server listens on *inside* the container; publish it with `-p <host-port>:8000` |
+| `/data` | | volume holding `config.json` (optional) and `macros.json` (automations edited in the UI; seeded with the examples on first start) |
+
+- Containers can't send the SSDP broadcast that `discover.py` uses, so pass
+  the TV's IP: run `python3 discover.py` on the host, or read it on the TV
+  under **Settings → Network → About**.
+- Build locally instead of pulling: `docker build -t roku-lan-remote .` or
+  `container build -t roku-lan-remote .`, then use that image name.
+- `PORT=80 TV_IP=… docker compose up -d` publishes a bare `http://tv.lan`.
 
 ## Terminal remote (TUI)
 
@@ -133,21 +168,38 @@ curl -X POST "http://<host-ip>:8000/api/macro/Movie%20Night"
 | `POST /api/text` | body `{"text": "hello"}` — types on the TV |
 | `GET/POST /api/macros` | read / replace the automation list |
 | `POST /api/macro/<name>` | run one automation |
+| `GET /api/health` | liveness only, never touches the TV (container health check) |
 
 ## Host it permanently (macOS)
 
-On an always-on machine (Mac mini/Studio, NAS, Pi):
+On an always-on Mac (mini/Studio), the server runs in a container supervised
+by launchd, using Apple's [`container`](https://github.com/apple/container)
+(macOS 26+, Apple silicon) or Docker Desktop, whichever is installed:
 
 - Clone the repo and run `python3 discover.py --save` once.
 - Give the host a static IP / DHCP reservation in your router.
-- Run `./install-macos.sh` from the repo directory. It registers a launchd
-  service (starts on boot, restarts on crash) using the port from
-  `config.json`; logs go to `server.log`.
-- Approve the one-time macOS prompt to allow Python to accept local
-  network connections.
-- Re-run the script after changing `config.json`; remove with
-  `./install-macos.sh --uninstall`. (Linux: a systemd unit running
-  `python3 server.py`.)
+- Run `./install-macos.sh` from the repo directory (no sudo). It builds the
+  image, registers a login agent that starts the container and restarts it
+  if it crashes, and publishes the port from `config.json`; logs go to
+  `server.log`. The repo directory is mounted as `/data`, so the container,
+  the TUI and the hotkey window share the same `config.json` and
+  `macros.json`.
+- `./install-macos.sh --image ghcr.io/ajarteag/roku-lan-remote:latest` pulls
+  the prebuilt image instead of building; `--runtime docker` forces Docker
+  when both runtimes are present.
+- Re-run the script after changing `config.json` or pulling updates; remove
+  with `./install-macos.sh --uninstall`. Upgrading from the old root
+  LaunchDaemon: the script removes it (that one step asks for sudo).
+- The server comes up when you log in, not before: both runtimes are
+  per-user. Enable automatic login (System Settings → Users & Groups) if the
+  Mac may reboot unattended.
+- Why a container and not plain `python3 server.py` under launchd: macOS
+  Local Network Privacy blocks an unprivileged background python from
+  reaching the TV, so the old installer had to run as root. The container
+  VM's network stack is not subject to it.
+
+Linux / NAS / Raspberry Pi: `docker compose up -d` (see
+[Run it in a container](#run-it-in-a-container)).
 
 ## A memorable URL (`http://tv.lan`)
 
@@ -189,6 +241,9 @@ Notes:
 
 - `server.py` — web server + ECP proxy (stdlib only)
 - `static/` — the web UI
+- `Dockerfile`, `compose.yaml` — container image and Compose service
+- `install-macos.sh`, `macos/run-container.sh` — launchd-supervised container on a Mac
+- `.github/workflows/docker.yml` — builds and publishes the image to GHCR
 - `roku_core.py` — shared remote logic: ECP client, dictation, key bindings
 - `roku_tui.py` — terminal remote (curses front end for roku_core)
 - `roku_gui.py` — hotkey window (Tk front end for roku_core, macOS)
