@@ -1,0 +1,16 @@
+.git
+.github
+.gitignore
+__pycache__
+*.pyc
+*.log
+.DS_Store
+screenshots/
+macos/
+data/
+install-*.sh
+discover.py
+roku_core.py
+roku_tui.py
+roku_gui.py
+*.md

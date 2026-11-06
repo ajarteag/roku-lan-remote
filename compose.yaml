@@ -1,0 +1,26 @@
+# docker compose up -d            # prebuilt image from GHCR
+# docker compose up -d --build    # or build from this checkout
+#
+# Settings come from the environment (or a .env file next to this file):
+#   TV_IP   the Roku's address (required; find it with `python3 discover.py`
+#           on the host, or on the TV under Settings > Network > About)
+#   PORT    host port to publish, default 8000 (PORT=80 for a bare http://tv.lan)
+#
+# The roku-data volume keeps macros.json (automations edited in the UI). A
+# named volume rather than a host directory so the unprivileged server user
+# can write to it on Linux without any chown step.
+services:
+  roku-remote:
+    image: ghcr.io/ajarteag/roku-lan-remote:latest
+    build: .
+    container_name: roku-remote
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      TV_IP: ${TV_IP:?set TV_IP to your Roku's address}
+    volumes:
+      - roku-data:/data
+
+volumes:
+  roku-data:
